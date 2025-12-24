@@ -24,7 +24,7 @@ This project was developed collaboratively by **Group-7**, consisting of **5 stu
 - RESTful APIs
 
 ### Frontend
-- **Next.js**
+- **Next.ts**
 - HTML, CSS, JavaScript
 
 ### Database
@@ -33,7 +33,7 @@ This project was developed collaboratively by **Group-7**, consisting of **5 stu
 ---
 
 ## 🧩 System Architecture
-- **Frontend:** Next.js for user interface and interaction  
+- **Frontend:** Next.ts for user interface and interaction  
 - **Backend:** Spring Boot for business logic and API services  
 - **Database:** PostgreSQL for storing inventory and user data  
 
