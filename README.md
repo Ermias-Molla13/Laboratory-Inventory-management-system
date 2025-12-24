@@ -40,7 +40,7 @@ This project was developed collaboratively by **Group-7**, consisting of **5 stu
 ---
 
 ## ✨ Features
-- User authentication and authorization  
+- Admin authentication and authorization  
 - Add, update, and delete laboratory items  
 - View inventory status  
 - Efficient laboratory resource management  
