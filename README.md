@@ -59,7 +59,11 @@ This project was developed collaboratively by **Group-7**, consisting of **5 stu
 | Betsegaw Muluneh | WDU1300580 |
 
 ---
+## This project is hosted on GitHub:  
+## 🔗 Repository Link
+- GitHub: [Laboratory Inventory Management System](https://github.com/Getahun08/Laboratory-Inventory-management-system)
 
+---
 ## 📚 Academic Information
 - **Institution:** Woldia University  
 - **Project Type:** University-Level Group Project  
