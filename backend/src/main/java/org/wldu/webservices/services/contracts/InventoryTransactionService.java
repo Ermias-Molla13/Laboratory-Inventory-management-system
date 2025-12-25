@@ -1,9 +1,8 @@
 package org.wldu.webservices.services.contracts;
 
 import org.wldu.webservices.enities.InventoryTransaction;
-import org.wldu.webservices.enities.TransactionType;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,11 +18,11 @@ public interface InventoryTransactionService {
 
     List<InventoryTransaction> getTransactionsByChemical(Long chemicalId);
 
-    List<InventoryTransaction> getTransactionsByType(TransactionType type);
+    List<InventoryTransaction> getTransactionsByType(String transactionType);
 
     List<InventoryTransaction> getTransactionsByDateRange(
-            LocalDate startDate,
-            LocalDate endDate
+            LocalDateTime startDate,
+            LocalDateTime endDate
     );
 
     void deleteTransaction(Long id);

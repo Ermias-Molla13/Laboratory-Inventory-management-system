@@ -3,33 +3,29 @@ package org.wldu.webservices.repositories;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import org.wldu.webservices.enities.InventoryTransaction;
-import org.wldu.webservices.enities.TransactionType;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
-public interface InventoryTransactionRepository extends JpaRepository<InventoryTransaction, Long> {
+public interface InventoryTransactionRepository
+        extends JpaRepository<InventoryTransaction, Long> {
 
-    // Find all transactions for a specific equipment
-    List<InventoryTransaction> findByEquipmentId(Long equipmentId);
+    // ✅ Correct for @ManyToOne Equipment
+    List<InventoryTransaction> findByEquipment_Id(Long equipmentId);
 
-    // Find all transactions for a specific chemical
-    List<InventoryTransaction> findByChemicalId(Long chemicalId);
+    // ✅ Correct for @ManyToOne Chemical
+    List<InventoryTransaction> findByChemical_Id(Long chemicalId);
 
-    // Find the 5 most recent transactions
-    // Make sure your entity has a field named 'transactionDate' (or rename here to match your entity)
+    // ✅ Works with LocalDateTime
     List<InventoryTransaction> findTop5ByOrderByTransactionDateDesc();
 
-    // Find transactions where quantity is less than minQuantity
-    List<InventoryTransaction> findByQuantityLessThan(int minQuantity);
-
-    // Find transactions by date range
+    // ✅ Correct date range query
     List<InventoryTransaction> findByTransactionDateBetween(
-            LocalDate startDate,
-            LocalDate endDate
+            LocalDateTime startDate,
+            LocalDateTime endDate
     );
 
-    // Find transactions by type (IN / OUT / ADJUSTMENT)
-    List<InventoryTransaction> findByTransactionType(TransactionType transactionType);
+    // ✅ transactionType is String in entity
+    List<InventoryTransaction> findByTransactionType(String transactionType);
 }

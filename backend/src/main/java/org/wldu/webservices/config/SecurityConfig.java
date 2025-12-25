@@ -6,6 +6,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -21,7 +22,6 @@ public class SecurityConfig {
     private final JwtAuthFilter jwtAuthFilter;
     private final CorsConfigurationSource corsConfigurationSource;
 
-    // ✅ Inject CORS bean properly
     public SecurityConfig(
             JwtAuthFilter jwtAuthFilter,
             CorsConfigurationSource corsConfigurationSource
@@ -34,22 +34,27 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource)) // ✅ FIXED
+                .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .csrf(csrf -> csrf.disable())
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .sessionManagement(
+                        session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/user/register").permitAll()
-                        .requestMatchers("/api/chemicals/**").permitAll()
-                        .requestMatchers("/api/equipment/**").permitAll()
-                        .requestMatchers("/api/suppliers/**").permitAll()
-                        .requestMatchers("/api/transactions/**").permitAll()
-                        .requestMatchers("/api/dashboard/**").permitAll()
+                        .requestMatchers(
+                                "/auth/**",
+                                "/user/register/**",
+                                "/api/chemicals/**",
+                                "/api/equipment/**",
+                                "/api/suppliers/**",
+                                "/api/dashboard/**",
+                                "/api/transactions/**"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(
+                        jwtAuthFilter,
+                        UsernamePasswordAuthenticationFilter.class
+                );
 
         return http.build();
     }

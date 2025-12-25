@@ -6,4 +6,4 @@ import jakarta.persistence.*;
 @Table(name = "suppliers")
 public class Supplier {
 
-}
+   }
