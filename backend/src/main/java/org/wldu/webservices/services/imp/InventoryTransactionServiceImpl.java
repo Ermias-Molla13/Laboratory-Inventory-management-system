@@ -3,11 +3,10 @@ package org.wldu.webservices.services.imp;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.wldu.webservices.enities.InventoryTransaction;
-import org.wldu.webservices.enities.TransactionType;
 import org.wldu.webservices.repositories.InventoryTransactionRepository;
 import org.wldu.webservices.services.contracts.InventoryTransactionService;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,8 +18,7 @@ public class InventoryTransactionServiceImpl
     private InventoryTransactionRepository transactionRepository;
 
     @Override
-    public InventoryTransaction saveTransaction(
-            InventoryTransaction transaction) {
+    public InventoryTransaction saveTransaction(InventoryTransaction transaction) {
         return transactionRepository.save(transaction);
     }
 
@@ -36,23 +34,23 @@ public class InventoryTransactionServiceImpl
 
     @Override
     public List<InventoryTransaction> getTransactionsByEquipment(Long equipmentId) {
-        return transactionRepository.findByEquipmentId(equipmentId);
+        return transactionRepository.findByEquipment_Id(equipmentId);
     }
 
     @Override
     public List<InventoryTransaction> getTransactionsByChemical(Long chemicalId) {
-        return transactionRepository.findByChemicalId(chemicalId);
+        return transactionRepository.findByChemical_Id(chemicalId);
     }
 
     @Override
-    public List<InventoryTransaction> getTransactionsByType(TransactionType type) {
-        return transactionRepository.findByTransactionType(type);
+    public List<InventoryTransaction> getTransactionsByType(String transactionType) {
+        return transactionRepository.findByTransactionType(transactionType);
     }
 
     @Override
     public List<InventoryTransaction> getTransactionsByDateRange(
-            LocalDate startDate,
-            LocalDate endDate) {
+            LocalDateTime startDate,
+            LocalDateTime endDate) {
         return transactionRepository
                 .findByTransactionDateBetween(startDate, endDate);
     }

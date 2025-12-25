@@ -1,50 +1,46 @@
 package org.wldu.webservices.enities;
 
 import jakarta.persistence.*;
-import jakarta.transaction.Transaction;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
+@Setter
+@Getter
 @Entity
 @Table(name = "inventory_transactions")
 public class InventoryTransaction {
-  @Id
+
+    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "equipment_id")
+    @JoinColumn(name = "equipment_id", nullable = false)
     private Equipment equipment;
 
     @ManyToOne
-    @JoinColumn(name = "chemical_id")
+    @JoinColumn(name = "chemical_id", nullable = false)
     private Chemical chemical;
 
     @ManyToOne
-    @JoinColumn(name = "supplier_id")
+    @JoinColumn(name = "supplier_id", nullable = false)
     private Supplier supplier;
 
     @Column(nullable = false)
-    private double quantity;  // Amount added or removed
+    private double quantity;
 
+    // ✅ Correct enum mapping
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String transactionType; // "IN" or "OUT"
+    private TransactionType transactionType; // IN / OUT
 
     @Column(nullable = false)
     private LocalDateTime transactionDate;
 
     @Column(nullable = false)
     private LocalDateTime timestamp;
-
-    public LocalDateTime getTimestamp() {
-        return timestamp;
-    }
-
-    public void setTimestamp(LocalDateTime timestamp) {
-        this.timestamp = timestamp;
-    }
 
     @Column
     private String notes;
@@ -53,86 +49,27 @@ public class InventoryTransaction {
     /* Constructors */
     /* ===================== */
 
-    public InventoryTransaction() {}  // Default constructor
+    public InventoryTransaction() {
+    }
 
-    public InventoryTransaction(Equipment equipment, Chemical chemical, Supplier supplier,
-                                double quantity, String transactionType,
-                                LocalDateTime transactionDate, String notes) {
+    // ✅ Correct constructor
+    public InventoryTransaction(
+            Equipment equipment,
+            Chemical chemical,
+            Supplier supplier,
+            double quantity,
+            TransactionType transactionType,
+            LocalDateTime transactionDate,
+            LocalDateTime timestamp,
+            String notes
+    ) {
         this.equipment = equipment;
         this.chemical = chemical;
         this.supplier = supplier;
         this.quantity = quantity;
         this.transactionType = transactionType;
         this.transactionDate = transactionDate;
-        this.notes = notes;
-    }
-
-    public static List<Transaction> findRecent(int i) {
-        return new ArrayList<>(); // returns an empty list for now
-    }
-
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Equipment getEquipment() {
-        return equipment;
-    }
-
-    public void setEquipment(Equipment equipment) {
-        this.equipment = equipment;
-    }
-
-    public Chemical getChemical() {
-        return chemical;
-    }
-
-    public void setChemical(Chemical chemical) {
-        this.chemical = chemical;
-    }
-
-    public Supplier getSupplier() {
-        return supplier;
-    }
-
-    public void setSupplier(Supplier supplier) {
-        this.supplier = supplier;
-    }
-
-    public double getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(double quantity) {
-        this.quantity = quantity;
-    }
-
-    public String getTransactionType() {
-        return transactionType;
-    }
-
-    public void setTransactionType(String transactionType) {
-        this.transactionType = transactionType;
-    }
-
-    public LocalDateTime getTransactionDate() {
-        return transactionDate;
-    }
-
-    public void setTransactionDate(LocalDateTime transactionDate) {
-        this.transactionDate = transactionDate;
-    }
-
-    public String getNotes() {
-        return notes;
-    }
-
-    public void setNotes(String notes) {
+        this.timestamp = timestamp;
         this.notes = notes;
     }
 }
