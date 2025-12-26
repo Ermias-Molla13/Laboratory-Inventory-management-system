@@ -27,6 +27,7 @@ interface Chemical {
   storageLocation?: string;
   expiryDate?: string;
 }
+const PAGE_TITLE = "Chemicals Inventory Page";
 
 // Fetch chemicals
 const fetchChemicals = async (): Promise<Chemical[]> => {
@@ -38,6 +39,7 @@ const fetchChemicals = async (): Promise<Chemical[]> => {
     return [];
   }
 };
+
 
 export default function ChemicalsPage() {
   const queryClient = useQueryClient();
