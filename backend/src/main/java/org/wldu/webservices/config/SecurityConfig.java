@@ -6,7 +6,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -31,15 +30,23 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
+                // ✅ Enable CORS
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
+
+                // ❌ Disable CSRF (JWT based)
                 .csrf(csrf -> csrf.disable())
-                .sessionManagement(
-                        session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+
+                // ✅ Stateless session (JWT)
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
+
+                // ✅ Authorization rules
                 .authorizeHttpRequests(auth -> auth
+                        // 🔓 PUBLIC ENDPOINTS
                         .requestMatchers(
                                 "/auth/**",
                                 "/user/register/**",
@@ -49,8 +56,12 @@ public class SecurityConfig {
                                 "/api/dashboard/**",
                                 "/api/transactions/**"
                         ).permitAll()
+
+                        // 🔐 EVERYTHING ELSE REQUIRES JWT
                         .anyRequest().authenticated()
                 )
+
+                // ✅ JWT filter
                 .addFilterBefore(
                         jwtAuthFilter,
                         UsernamePasswordAuthenticationFilter.class
@@ -59,15 +70,17 @@ public class SecurityConfig {
         return http.build();
     }
 
+    // 🔐 Password encoder
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    // 🔑 Authentication manager
     @Bean
     public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration config
+            AuthenticationConfiguration configuration
     ) throws Exception {
-        return config.getAuthenticationManager();
+        return configuration.getAuthenticationManager();
     }
 }

@@ -20,6 +20,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
     private final CustomUserDetailsService userDetailsService;
 
+    // 🔓 PUBLIC ENDPOINTS (JWT NOT REQUIRED)
     private static final List<String> PUBLIC_PATHS = List.of(
             "/auth",
             "/user/register",
@@ -35,44 +36,72 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         this.userDetailsService = userDetailsService;
     }
 
+    /**
+     * ✅ Skip JWT filter for:
+     * - OPTIONS (CORS preflight)
+     * - Public endpoints
+     */
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
-        // Skip public endpoints and CORS preflight
-        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) return true;
+
+        // Allow CORS preflight
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            return true;
+        }
+
+        // Allow public endpoints
         return PUBLIC_PATHS.stream().anyMatch(path::startsWith);
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain)
-            throws ServletException, IOException {
+    protected void doFilterInternal(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain
+    ) throws ServletException, IOException {
 
         String authHeader = request.getHeader("Authorization");
 
-        // If no token → just continue for public endpoints
+        // 🔓 No token → continue (important for public endpoints)
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
         String jwt = authHeader.substring(7);
-        String username = jwtUtil.extractUsername(jwt);
+        String username;
+
+        try {
+            username = jwtUtil.extractUsername(jwt);
+        } catch (Exception e) {
+            // ❌ Invalid token → continue without auth
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         if (username != null &&
                 SecurityContextHolder.getContext().getAuthentication() == null) {
 
-            var userDetails = userDetailsService.loadUserByUsername(username);
+            UserDetails userDetails =
+                    userDetailsService.loadUserByUsername(username);
 
             if (jwtUtil.isTokenValid(jwt, userDetails)) {
-                var authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        userDetails.getAuthorities()
+
+                UsernamePasswordAuthenticationToken authToken =
+                        new UsernamePasswordAuthenticationToken(
+                                userDetails,
+                                null,
+                                userDetails.getAuthorities()
+                        );
+
+                authToken.setDetails(
+                        new WebAuthenticationDetailsSource()
+                                .buildDetails(request)
                 );
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+
+                SecurityContextHolder.getContext()
+                        .setAuthentication(authToken);
             }
         }
 

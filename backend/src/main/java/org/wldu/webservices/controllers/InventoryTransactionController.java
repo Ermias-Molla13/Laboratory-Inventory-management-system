@@ -28,6 +28,8 @@ public class InventoryTransactionController {
         return transactionService.saveTransaction(transaction);
     }
 
+
+
     // ✅ Get all transactions
     @GetMapping
     public List<InventoryTransaction> getAllTransactions() {
@@ -63,14 +65,14 @@ public class InventoryTransactionController {
     }
 
     // ✅ FIX: LocalDateTime instead of LocalDate
-    @GetMapping("/date")
-    public List<InventoryTransaction> getByDateRange(
-            @RequestParam LocalDateTime startDate,
-            @RequestParam LocalDateTime endDate) {
-        return transactionService.getTransactionsByDateRange(
-                startDate, endDate
-        );
-    }
+//    @GetMapping("/date")
+//    public List<InventoryTransaction> getByDateRange(
+//            @RequestParam LocalDateTime startDate,
+//            @RequestParam LocalDateTime endDate) {
+//        return transactionService.getTransactionsByDateRange(
+//                startDate, endDate
+//        );
+//    }
 
     // ✅ Delete
     @DeleteMapping("/{id}")
