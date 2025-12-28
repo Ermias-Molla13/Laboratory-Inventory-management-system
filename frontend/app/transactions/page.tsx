@@ -1,7 +1,7 @@
 "use client";
 
-import { useState,useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -14,147 +14,163 @@ import {
 } from "@/components/ui/table";
 import {
   Search,
-  Download,
-  ArrowUpRight,
-  ArrowDownLeft,
   Plus,
+  Edit,
+  Trash,
+  ArrowDownLeft,
+  ArrowUpRight,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import apiClient from "@/lib/apiClient";
 import { useRouter } from "next/navigation";
 
+/* -------------------- Types -------------------- */
+
+interface EntityRef {
+  id: number;
+  name?: string;
+}
+
 interface Transaction {
   id: number;
-  equipment: { id: number; name: string };
-  chemical: { id: number; name: string };
-  supplier: { id: number; name: string };
+  equipment?: EntityRef;
+  chemical?: EntityRef;
+  supplier?: EntityRef;
   quantity: number;
   transactionType: "IN" | "OUT" | "ADJUSTMENT";
   transactionDate: string;
   notes?: string;
 }
 
-// Fetch transactions from backend
-const fetchTransactions = async (): Promise<Transaction[]> => {
-  const res = await apiClient.get("/api/transactions");
-  return res.data || [];
-};
+/* -------------------- Page -------------------- */
 
 export default function TransactionsPage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
+  const [token, setToken] = useState<string | null>(null);
+  const [isAuthChecked, setIsAuthChecked] = useState(false);
+
+  /* ---------- Auth Guard ---------- */
+  useEffect(() => {
+    const storedToken = localStorage.getItem("token");
+    if (!storedToken) {
+      router.replace("/login");
+    } else {
+      setToken(storedToken);
+      setIsAuthChecked(true);
+    }
+  }, [router]);
+
+  /* ---------- Fetch ---------- */
+  const fetchTransactions = async (): Promise<Transaction[]> => {
+    if (!token) return [];
+    const res = await apiClient.get("/api/transactions", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return res.data ?? [];
+  };
 
   const {
     data: transactions = [],
     isLoading,
     error,
-  } = useQuery<Transaction[]>({
+  } = useQuery({
     queryKey: ["transactions"],
     queryFn: fetchTransactions,
+    enabled: isAuthChecked, // Only run after token is set
   });
 
-  useEffect(() => {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        router.replace("/login");
-        return;
-      }})
+  /* ---------- Delete ---------- */
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) =>
+      apiClient.delete(`/api/transactions/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["transactions"] }),
+  });
 
+  /* ---------- Helpers ---------- */
+  const getName = (e?: EntityRef) => e?.name || "-";
+
+  const filteredTransactions = transactions.filter((tx) => {
+    const q = searchTerm.toLowerCase();
+    return (
+      getName(tx.equipment).toLowerCase().includes(q) ||
+      getName(tx.chemical).toLowerCase().includes(q) ||
+      getName(tx.supplier).toLowerCase().includes(q)
+    );
+  });
+
+  if (!isAuthChecked) return null; // wait for auth check
   if (isLoading) return <p>Loading transactions...</p>;
   if (error instanceof Error) return <p>Error: {error.message}</p>;
 
-  const filteredTransactions = transactions.filter(
-    (tx) =>
-      tx.chemical?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      tx.equipment?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      tx.supplier?.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  /* -------------------- UI -------------------- */
 
   return (
     <div className="min-h-screen bg-slate-50 py-8 px-4">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
-              Transactions
-            </h1>
-            <p className="text-slate-500">
-              View history of inventory movements.
-            </p>
-          </div>
-          <div className="flex gap-2 flex-wrap">
-            {/* Add Transaction Button */}
-            <Button
-              className="flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700"
-              onClick={() => router.push("/transactions/new")}
-            >
-              <Plus className="h-4 w-4" /> Add Transaction
-            </Button>
-
-            {/* Export Report */}
-            <Button className="flex items-center gap-2 border-blue-400 text-blue-700 hover:bg-blue-50">
-              <Download className="h-4 w-4" /> Export Report
-            </Button>
-          </div>
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold">Transactions</h1>
+          <Button
+            className="bg-blue-600 hover:bg-blue-700 text-white shadow"
+            onClick={() => router.push("/transactions/new")}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Transaction
+          </Button>
         </div>
 
-        <Card className="shadow-lg border border-blue-100">
-          <CardHeader className="pb-3 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-            <CardTitle className="text-lg font-semibold text-blue-800">
-              Transaction History
-            </CardTitle>
-
-            <div className="relative flex-1 max-w-sm mt-4 md:mt-0">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
-              <Input
-                type="search"
-                placeholder="Search transactions..."
-                className="pl-8 border-blue-200 focus:border-blue-500 focus:ring-blue-500"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+        <Card>
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <CardTitle>Transaction History</CardTitle>
+              <div className="relative w-64">
+                <Search className="absolute left-2 top-2 h-4 w-4 text-gray-400" />
+                <Input
+                  className="pl-8"
+                  placeholder="Search..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
             </div>
           </CardHeader>
 
-          <CardContent className="overflow-x-auto">
-            <Table className="min-w-full border-collapse">
+          <CardContent>
+            <Table>
               <TableHeader>
-                <TableRow className="bg-blue-50 text-blue-700">
+                <TableRow>
                   <TableHead>Equipment</TableHead>
                   <TableHead>Chemical</TableHead>
                   <TableHead>Supplier</TableHead>
-                  <TableHead>Quantity</TableHead>
+                  <TableHead>Qty</TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Notes</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
 
               <TableBody>
                 {filteredTransactions.map((tx) => (
-                  <TableRow
-                    key={tx.id}
-                    className="hover:bg-blue-50 transition-colors duration-150"
-                  >
-                    <TableCell className="font-medium text-slate-800">
-                      {tx.equipment?.name || "-"}
-                    </TableCell>
-                    <TableCell className="text-slate-700">
-                      {tx.chemical?.name || "-"}
-                    </TableCell>
-                    <TableCell className="text-slate-700">
-                      {tx.supplier?.name || "-"}
-                    </TableCell>
-                    <TableCell className="text-center font-semibold text-slate-900">
-                      {tx.quantity}
-                    </TableCell>
+                  <TableRow key={tx.id}>
+                    <TableCell>{getName(tx.equipment)}</TableCell>
+                    <TableCell>{getName(tx.chemical)}</TableCell>
+                    <TableCell>{getName(tx.supplier)}</TableCell>
+                    <TableCell>{tx.quantity}</TableCell>
+
                     <TableCell>
                       <span
-                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                        className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs ${
                           tx.transactionType === "IN"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-orange-100 text-orange-800"
+                            ? "bg-green-100 text-green-700"
+                            : "bg-orange-100 text-orange-700"
                         }`}
                       >
                         {tx.transactionType === "IN" ? (
@@ -165,11 +181,39 @@ export default function TransactionsPage() {
                         {tx.transactionType}
                       </span>
                     </TableCell>
-                    <TableCell className="text-slate-500">
-                      {tx.transactionDate}
+
+                    <TableCell>
+                      {new Date(tx.transactionDate).toLocaleDateString()}
                     </TableCell>
-                    <TableCell className="text-slate-700">
-                      {tx.notes || "-"}
+                    <TableCell>{tx.notes || "-"}</TableCell>
+
+                    {/* Actions */}
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        {/* Edit */}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() =>
+                            router.push(`/transactions/new?id=${tx.id}`)
+                          }
+                        >
+                          <Edit className="h-4 w-4 text-blue-600" />
+                        </Button>
+
+                        {/* Delete */}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            if (confirm("Delete this transaction?")) {
+                              deleteMutation.mutate(tx.id);
+                            }
+                          }}
+                        >
+                          <Trash className="h-4 w-4 text-red-600" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

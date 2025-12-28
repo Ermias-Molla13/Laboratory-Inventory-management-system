@@ -1,6 +1,7 @@
 package org.wldu.webservices.enities;
 
 import com.fasterxml.jackson.annotation.JsonIdentityReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -16,19 +17,22 @@ public class InventoryTransaction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "equipment_id", nullable = false)
     @JsonIdentityReference(alwaysAsId = true)
+    @JsonIgnoreProperties({"hibernateLazyInitializer"})
     private Equipment equipment;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "chemical_id", nullable = false)
-    @JsonIdentityReference(alwaysAsId = true)
+   @JsonIdentityReference(alwaysAsId = true)
+    @JsonIgnoreProperties({"hibernateLazyInitializer"})
     private Chemical chemical;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "supplier_id", nullable = false)
-    @JsonIdentityReference(alwaysAsId = true)
+   @JsonIdentityReference(alwaysAsId = true)
+    @JsonIgnoreProperties({"hibernateLazyInitializer"})
     private Supplier supplier;
 
     @Column(nullable = false)

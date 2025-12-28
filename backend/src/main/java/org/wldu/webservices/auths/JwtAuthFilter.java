@@ -20,7 +20,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
     private final CustomUserDetailsService userDetailsService;
 
-    // 🔓 PUBLIC ENDPOINTS (JWT NOT REQUIRED)
+    // PUBLIC ENDPOINTS (JWT NOT REQUIRED)
     private static final List<String> PUBLIC_PATHS = List.of(
             "/auth",
             "/user/register",
@@ -28,7 +28,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             "/api/chemicals",
             "/api/equipment",
             "/api/suppliers",
-            "/api/transactions"
+            "/api/transactions"  // ✅ Add transactions here
     );
 
     public JwtAuthFilter(JwtUtil jwtUtil, CustomUserDetailsService userDetailsService) {
@@ -36,11 +36,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         this.userDetailsService = userDetailsService;
     }
 
-    /**
-     * ✅ Skip JWT filter for:
-     * - OPTIONS (CORS preflight)
-     * - Public endpoints
-     */
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
@@ -63,7 +58,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         String authHeader = request.getHeader("Authorization");
 
-        // 🔓 No token → continue (important for public endpoints)
+        // No token → continue
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
@@ -75,7 +70,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         try {
             username = jwtUtil.extractUsername(jwt);
         } catch (Exception e) {
-            // ❌ Invalid token → continue without auth
+            // Invalid token → continue
             filterChain.doFilter(request, response);
             return;
         }

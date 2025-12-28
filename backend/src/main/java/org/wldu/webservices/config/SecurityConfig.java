@@ -33,20 +33,17 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
-                // ✅ Enable CORS
+                // Enable CORS
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
-
-                // ❌ Disable CSRF (JWT based)
+                // Disable CSRF (JWT based)
                 .csrf(csrf -> csrf.disable())
-
-                // ✅ Stateless session (JWT)
+                // Stateless session
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-
-                // ✅ Authorization rules
+                // Authorization rules
                 .authorizeHttpRequests(auth -> auth
-                        // 🔓 PUBLIC ENDPOINTS
+                        // PUBLIC ENDPOINTS
                         .requestMatchers(
                                 "/auth/**",
                                 "/user/register/**",
@@ -54,14 +51,12 @@ public class SecurityConfig {
                                 "/api/equipment/**",
                                 "/api/suppliers/**",
                                 "/api/dashboard/**",
-                                "/api/transactions/**"
+                                "/api/transactions/**" // ✅ Transactions public
                         ).permitAll()
-
-                        // 🔐 EVERYTHING ELSE REQUIRES JWT
+                        // EVERYTHING ELSE REQUIRES AUTH
                         .anyRequest().authenticated()
                 )
-
-                // ✅ JWT filter
+                // JWT filter
                 .addFilterBefore(
                         jwtAuthFilter,
                         UsernamePasswordAuthenticationFilter.class
@@ -70,13 +65,11 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // 🔐 Password encoder
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    // 🔑 Authentication manager
     @Bean
     public AuthenticationManager authenticationManager(
             AuthenticationConfiguration configuration

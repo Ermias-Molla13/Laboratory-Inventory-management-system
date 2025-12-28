@@ -1,12 +1,11 @@
 package org.wldu.webservices.services.imp;
 
-import jakarta.validation.constraints.NotNull;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.wldu.webservices.enities.*;
 import org.wldu.webservices.repositories.*;
 import org.wldu.webservices.services.contracts.InventoryTransactionService;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -14,41 +13,49 @@ import java.util.Optional;
 @Service
 public class InventoryTransactionServiceImpl implements InventoryTransactionService {
 
-    @Autowired
-    private InventoryTransactionRepository transactionRepository;
+    private final InventoryTransactionRepository transactionRepository;
+    private final EquipmentRepository equipmentRepository;
+    private final ChemicalRepository chemicalRepository;
+    private final SupplierRepository supplierRepository;
 
-    @Autowired
-    private EquipmentRepository equipmentRepository;
-
-    @Autowired
-    private ChemicalRepository chemicalRepository;
-
-    @Autowired
-    private SupplierRepository supplierRepository;
+    public InventoryTransactionServiceImpl(
+            InventoryTransactionRepository transactionRepository,
+            EquipmentRepository equipmentRepository,
+            ChemicalRepository chemicalRepository,
+            SupplierRepository supplierRepository
+    ) {
+        this.transactionRepository = transactionRepository;
+        this.equipmentRepository = equipmentRepository;
+        this.chemicalRepository = chemicalRepository;
+        this.supplierRepository = supplierRepository;
+    }
 
     @Override
     public InventoryTransaction saveTransaction(InventoryTransaction transaction) {
 
-        // ✅ Load real entities from DB
-        if (transaction.getEquipment() != null && transaction.getEquipment().getId() != null) {
-            Equipment eq = equipmentRepository.findById(transaction.getEquipment().getId())
-                    .orElseThrow(() -> new RuntimeException("Equipment not found"));
-            transaction.setEquipment(eq);
-        }
+        // Validate and load Equipment
+        Optional.ofNullable(transaction.getEquipment())
+                .map(Equipment::getId)
+                .ifPresent(id -> transaction.setEquipment(
+                        equipmentRepository.findById(id)
+                                .orElseThrow(() -> new RuntimeException("Equipment not found with id: " + id))
+                ));
 
-        if (transaction.getChemical() != null && transaction.getChemical().getId() != 0) {
-            Chemical chem = chemicalRepository.findById(transaction.getChemical().getId())
-                    .orElseThrow(() -> new RuntimeException("Chemical not found"));
-            transaction.setChemical(chem);
-        }
+        // Validate and load Chemical
+        Optional.ofNullable(transaction.getChemical())
+                .map(Chemical::getId)
+                .ifPresent(id -> transaction.setChemical(
+                        chemicalRepository.findById(id)
+                                .orElseThrow(() -> new RuntimeException("Chemical not found with id: " + id))
+                ));
 
-        if (transaction.getSupplier() != null && transaction.getSupplier().getId() != null) {
-            Supplier sup = supplierRepository.findById(transaction.getSupplier().getId())
-                    .orElseThrow(() -> new RuntimeException("Supplier not found"));
-            transaction.setSupplier(sup);
-        }
-
-        // ✅ Defaults are handled by @PrePersist in entity
+        // Validate and load Supplier
+        Optional.ofNullable(transaction.getSupplier())
+                .map(Supplier::getId)
+                .ifPresent(id -> transaction.setSupplier(
+                        supplierRepository.findById(id)
+                                .orElseThrow(() -> new RuntimeException("Supplier not found with id: " + id))
+                ));
 
         return transactionRepository.save(transaction);
     }
@@ -74,12 +81,15 @@ public class InventoryTransactionServiceImpl implements InventoryTransactionServ
     }
 
     @Override
-    public List<InventoryTransaction> getTransactionsByType(String transactionType) {
-        return transactionRepository.findByTransactionType(transactionType);
+    public List<InventoryTransaction> getTransactionsByType(String transactionTypeStr) {
+        TransactionType type = TransactionType.valueOf(transactionTypeStr.toUpperCase());
+        return transactionRepository.findByTransactionType(type);
     }
 
     @Override
-    public List<InventoryTransaction> getTransactionsByDateRange(LocalDateTime startDate, LocalDateTime endDate) {
+    public List<InventoryTransaction> getTransactionsByDateRange(LocalDateTime startDateTime, LocalDateTime endDateTime) {
+        LocalDate startDate = startDateTime.toLocalDate();
+        LocalDate endDate = endDateTime.toLocalDate();
         return transactionRepository.findByTransactionDateBetween(startDate, endDate);
     }
 
