@@ -1,5 +1,6 @@
 "use client";
 
+import type React from "react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
@@ -37,11 +38,14 @@ interface Transaction {
   timestamp: string;
 }
 
-interface LowStockItem {
+interface StockItem {
   id: number;
   name: string;
   quantity: number;
   minQuantity: number;
+  expiryDate?: string; // ISO date string
+  isLowStock?: boolean;
+  isExpired?: boolean;
 }
 
 export default function Dashboard() {
@@ -49,9 +53,9 @@ export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState<Stat[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [lowStock, setLowStock] = useState<LowStockItem[]>([]);
+  const [dashboardItems, setDashboardItems] = useState<StockItem[]>([]);
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://localhost:8081";
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081";
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -62,10 +66,10 @@ export default function Dashboard() {
 
     async function fetchDashboardData() {
       try {
+        // Dashboard stats
         const statsRes = await axios.get(`${API_BASE}/api/dashboard/stats`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        console.log("DASHBOARD STATS RESPONSE:", statsRes.data);
         setStats([
           {
             title: "Total Chemicals",
@@ -94,47 +98,78 @@ export default function Dashboard() {
           },
         ]);
 
+        // Recent transactions
         const txRes = await axios.get(
           `${API_BASE}/api/dashboard/transactions/recent`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setTransactions(Array.isArray(txRes.data) ? txRes.data : []);
 
-        const lowStockRes = await axios.get(
-          `${API_BASE}/api/dashboard/stock/low`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        setLowStock(Array.isArray(lowStockRes.data) ? lowStockRes.data : []);
+        // Low stock items (existing endpoint)
+        const stockRes = await axios.get(`${API_BASE}/api/dashboard/stock/low`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const lowStockData: StockItem[] = Array.isArray(stockRes.data)
+          ? stockRes.data
+          : [];
 
-        setIsLoading(false);
+        const now = new Date();
+
+        // Include expired items even if quantity > minQuantity
+        const filteredItems = lowStockData.map((item) => ({
+          ...item,
+          isExpired: item.expiryDate ? new Date(item.expiryDate) < now : false,
+          isLowStock: item.quantity < item.minQuantity,
+        }));
+
+        // Sort: expired first
+        filteredItems.sort((a, b) => {
+          if (a.isExpired && !b.isExpired) return -1;
+          if (!a.isExpired && b.isExpired) return 1;
+          return 0;
+        });
+
+        setDashboardItems(filteredItems);
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error);
-        router.replace("/dashboard");
+      } finally {
+        // Stop loader always
+        setIsLoading(false);
       }
     }
 
     fetchDashboardData();
   }, [router, API_BASE]);
 
-  if (isLoading) return <div>Loading dashboard...</div>;
+  if (isLoading)
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-12 w-12 rounded-full border-4 border-blue-200 border-t-blue-600 animate-spin" />
+          <p className="text-slate-600 font-medium animate-pulse">
+            Loading dashboard...
+          </p>
+        </div>
+      </div>
+    );
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6 space-y-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-6 space-y-8">
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
+        <div className="space-y-2">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 bg-clip-text text-transparent tracking-tight">
             Dashboard
           </h1>
-          <p className=" mt-1 text-blue-800">
-            Welcome back, Admin. Here’s your laboratory inventory overview.
+          <p className="text-base text-slate-600 font-medium">
+            Welcome back, Admin. Here is your laboratory inventory overview.
           </p>
         </div>
 
         <div className="flex gap-3">
           <Button
             asChild
-            className="bg-blue-600 hover:bg-blue-700 text-white shadow"
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
           >
             <Link href="/chemicals/new">
               <Plus className="h-4 w-4 mr-2" /> Add Chemical
@@ -144,71 +179,64 @@ export default function Dashboard() {
           <Button
             asChild
             variant="outline"
-            className="border-blue-200 text-blue-700 hover:bg-blue-50"
+            className="border-2 border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300 shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-300 bg-transparent"
           >
             <Link href="/transactions">View Reports</Link>
           </Button>
         </div>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat, index) => (
           <Card
             key={index}
-            className="relative border border-blue-100 shadow-sm hover:shadow-md transition"
+            className="relative border-0 bg-white/80 backdrop-blur-sm shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 group overflow-hidden"
           >
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <CardHeader className="flex flex-row items-center justify-between pb-2 relative z-10">
               <CardTitle className="text-sm font-semibold text-slate-600">
                 {stat.title}
               </CardTitle>
-
-              <div className="h-9 w-9 rounded-lg bg-blue-50 flex items-center justify-center">
+              <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center shadow-md">
                 <stat.icon
-                  className={`h-5 w-5 ${
-                    stat.color ? stat.color : "text-blue-600"
-                  }`}
+                  className={`h-5 w-5 ${stat.color ? stat.color : "text-blue-600"}`}
                 />
               </div>
             </CardHeader>
-
-            <CardContent>
-              <div className="text-3xl font-bold text-slate-900">
+            <CardContent className="relative z-10">
+              <div className="text-4xl font-bold bg-gradient-to-r from-slate-900 to-blue-900 bg-clip-text text-transparent">
                 {stat.value}
               </div>
-              <p className="text-sm text-slate-500 mt-1">{stat.description}</p>
+              <p className="text-sm text-slate-500 mt-2">{stat.description}</p>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      {/* Content Section */}
+      {/* Main Grid */}
       <div className="grid gap-6 lg:grid-cols-7">
         {/* Recent Transactions */}
-        <Card className="lg:col-span-4 border-blue-100 shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-slate-800">
+        <Card className="lg:col-span-4 border-0 bg-white/90 backdrop-blur-sm shadow-xl hover:shadow-2xl transition-all duration-500">
+          <CardHeader className="border-b border-slate-100 bg-gradient-to-r from-white to-blue-50/30">
+            <CardTitle className="text-xl font-bold text-slate-800">
               Recent Transactions
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-slate-600">
               Latest chemical inventory movements
             </CardDescription>
           </CardHeader>
-
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3 pt-6">
             {transactions.length ? (
               transactions.map((tx) => (
                 <div
                   key={tx.id}
-                  className="flex items-center justify-between rounded-lg
-                           border border-blue-100 bg-white px-4 py-3
-                           hover:bg-blue-50 transition"
+                  className="flex items-center justify-between rounded-xl border border-slate-100 bg-gradient-to-r from-white to-slate-50 px-4 py-3"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                    <div className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center shadow-sm">
                       <FlaskConical className="h-5 w-5 text-blue-600" />
                     </div>
-
                     <div>
                       <p className="text-sm font-semibold text-slate-800">
                         {tx.chemicalName}
@@ -218,9 +246,8 @@ export default function Dashboard() {
                       </p>
                     </div>
                   </div>
-
                   <div className="text-right">
-                    <p className="text-sm font-medium text-slate-800">
+                    <p className="text-sm font-bold text-slate-800">
                       {tx.quantity}
                     </p>
                     <p className="text-xs text-slate-500">
@@ -230,13 +257,14 @@ export default function Dashboard() {
                 </div>
               ))
             ) : (
-              <p className="text-sm text-slate-500">No transactions found.</p>
+              <p className="text-sm text-center py-8 text-slate-500">
+                No transactions found.
+              </p>
             )}
-
             <Button
               asChild
               variant="ghost"
-              className="w-full text-blue-600 hover:bg-blue-50"
+              className="w-full text-blue-600 font-semibold mt-4"
             >
               <Link href="/transactions">
                 View All Transactions
@@ -246,44 +274,73 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Low Stock Alerts */}
-        <Card className="lg:col-span-3 border-red-100 shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-red-600">Low Stock Alerts</CardTitle>
-            <CardDescription>Items below minimum quantity</CardDescription>
+        {/* Low Stock & Expired Items */}
+        <Card className="lg:col-span-3 border-0 bg-white/90 backdrop-blur-sm shadow-xl hover:shadow-2xl transition-all duration-500 overflow-hidden">
+          <CardHeader className="border-b border-red-100 bg-gradient-to-r from-white to-red-50/30 relative z-10">
+            <CardTitle className="text-xl font-bold text-red-600 flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 animate-pulse" />
+              Low Stock & Expired Items
+            </CardTitle>
+            <CardDescription className="text-slate-600">
+              Items that require attention
+            </CardDescription>
           </CardHeader>
-
-          <CardContent className="space-y-4">
-            {lowStock.length ? (
-              lowStock.map((item) => (
+          <CardContent className="space-y-3 pt-6 relative z-10">
+            {dashboardItems.length ? (
+              dashboardItems.map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-center justify-between
-                           rounded-lg border border-red-100 bg-red-50 px-3 py-2"
+                  className={`flex items-center justify-between rounded-xl border-2 px-3 py-3 transform hover:scale-[1.02] transition-all duration-300 group ${
+                    item.isLowStock
+                      ? "border-red-200 bg-red-50"
+                      : item.isExpired
+                      ? "border-yellow-200 bg-yellow-50"
+                      : ""
+                  }`}
                 >
                   <div className="flex items-center gap-3">
-                    <AlertTriangle className="h-5 w-5 text-red-600" />
+                    <AlertTriangle
+                      className={`h-5 w-5 animate-pulse ${
+                        item.isLowStock
+                          ? "text-red-600"
+                          : item.isExpired
+                          ? "text-yellow-600"
+                          : "text-gray-400"
+                      }`}
+                    />
                     <div>
                       <p className="text-sm font-semibold text-slate-800">
                         {item.name}
                       </p>
-                      <p className="text-xs text-slate-600">
-                        Qty {item.quantity} (Min {item.minQuantity})
+                      <p className="text-xs text-slate-600 font-medium">
+                        Qty {item.quantity} (Min {item.minQuantity}){" "}
+                        {item.isExpired
+                          ? `• Expired: ${new Date(
+                              item.expiryDate!
+                            ).toLocaleDateString()}`
+                          : ""}
                       </p>
                     </div>
                   </div>
-
                   <Button
                     size="sm"
                     variant="outline"
-                    className="border-red-300 text-red-600 hover:bg-red-100"
+                    className={`border-2 ${
+                      item.isLowStock
+                        ? "border-red-300 text-red-600 hover:bg-red-100"
+                        : item.isExpired
+                        ? "border-yellow-300 text-yellow-600 hover:bg-yellow-100"
+                        : ""
+                    }`}
                   >
-                    Order
+                    Action
                   </Button>
                 </div>
               ))
             ) : (
-              <p className="text-sm text-slate-500">No low stock items 🎉</p>
+              <p className="text-center py-8 text-slate-600">
+                No low stock or expired items
+              </p>
             )}
           </CardContent>
         </Card>

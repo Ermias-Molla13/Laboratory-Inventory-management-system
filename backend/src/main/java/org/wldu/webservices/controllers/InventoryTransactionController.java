@@ -45,7 +45,7 @@ public class InventoryTransactionController {
     public InventoryTransaction save(@RequestBody Map<String, Object> payload) {
         Long equipmentId = Long.valueOf(payload.get("equipmentId").toString());
         Long chemicalId = Long.valueOf(payload.get("chemicalId").toString());
-        Long supplierId = Long.valueOf(payload.get("supplierId").toString());
+        Object supplierObj = payload.get("supplierId");
         Double quantity = Double.valueOf(payload.get("quantity").toString());
         String typeStr = payload.get("transactionType").toString();
         String dateStr = payload.get("transactionDate").toString();
@@ -56,8 +56,13 @@ public class InventoryTransactionController {
                 .orElseThrow(() -> new RuntimeException("Equipment not found"));
         Chemical chem = chemicalRepository.findById(chemicalId)
                 .orElseThrow(() -> new RuntimeException("Chemical not found"));
-        Supplier sup = supplierRepository.findById(supplierId)
-                .orElseThrow(() -> new RuntimeException("Supplier not found"));
+
+        Supplier sup = null;
+        if (supplierObj != null) {
+            Long supplierId = Long.valueOf(supplierObj.toString());
+            sup = supplierRepository.findById(supplierId)
+                    .orElseThrow(() -> new RuntimeException("Supplier not found"));
+        }
 
         // Convert string to enum
         TransactionType type = TransactionType.valueOf(typeStr.toUpperCase());
@@ -67,6 +72,54 @@ public class InventoryTransactionController {
         tx.setEquipment(eq);
         tx.setChemical(chem);
         tx.setSupplier(sup);
+        tx.setQuantity(quantity);
+        tx.setTransactionType(type);
+        tx.setTransactionDate(LocalDate.parse(dateStr));
+        tx.setNotes(notes);
+
+        return transactionRepository.save(tx);
+    }
+
+    // ========================
+    // UPDATE TRANSACTION
+    // ========================
+    @PutMapping("/{id}")
+    public InventoryTransaction updateTransaction(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> payload
+    ) {
+        InventoryTransaction tx = transactionRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Transaction not found"));
+
+        // Parse payload
+        Long equipmentId = Long.valueOf(payload.get("equipmentId").toString());
+        Long chemicalId = Long.valueOf(payload.get("chemicalId").toString());
+        Object supplierObj = payload.get("supplierId");
+        Double quantity = Double.valueOf(payload.get("quantity").toString());
+        String typeStr = payload.get("transactionType").toString();
+        String dateStr = payload.get("transactionDate").toString();
+        String notes = payload.getOrDefault("notes", "").toString();
+
+        // Load full entities
+        Equipment eq = equipmentRepository.findById(equipmentId)
+                .orElseThrow(() -> new RuntimeException("Equipment not found"));
+        Chemical chem = chemicalRepository.findById(chemicalId)
+                .orElseThrow(() -> new RuntimeException("Chemical not found"));
+
+        Supplier sup = null;
+        if (supplierObj != null) {
+            Long supplierId = Long.valueOf(supplierObj.toString());
+            sup = supplierRepository.findById(supplierId)
+                    .orElseThrow(() -> new RuntimeException("Supplier not found"));
+        }
+
+        // Convert string to enum
+        TransactionType type = TransactionType.valueOf(typeStr.toUpperCase());
+
+        // Update transaction fields
+        tx.setEquipment(eq);
+        tx.setChemical(chem);
+        tx.setSupplier(sup); // can be null
         tx.setQuantity(quantity);
         tx.setTransactionType(type);
         tx.setTransactionDate(LocalDate.parse(dateStr));

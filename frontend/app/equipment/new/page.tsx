@@ -16,11 +16,14 @@ import {
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import apiClient from "@/lib/apiClient";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function NewEquipmentPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const id = searchParams.get("id"); // if editing
+  const queryClient = useQueryClient();
+
+  const id = searchParams.get("id");
   const isEdit = !!id;
 
   const [name, setName] = useState("");
@@ -30,9 +33,7 @@ export default function NewEquipmentPage() {
     "ACTIVE" | "UNDER_MAINTENANCE" | "DAMAGED" | "RETIRED"
   >("ACTIVE");
   const [quantity, setQuantity] = useState<number | "">("");
-  //   const [supplier, setSupplier] = useState("");
 
-  // Populate form if editing
   useEffect(() => {
     if (isEdit) {
       setName(searchParams.get("name") || "");
@@ -40,44 +41,57 @@ export default function NewEquipmentPage() {
       setSerialNumber(searchParams.get("serialNumber") || "");
       setStatus((searchParams.get("status") as any) || "ACTIVE");
       setQuantity(Number(searchParams.get("quantity")) || 1);
-      //   setSupplier(searchParams.get("supplier") || "");
     }
   }, [isEdit, searchParams]);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (!token) {
-      router.replace("/login");
-      return;
-    }
-  })
-
+    if (!token) router.replace("/login");
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
     if (!name.trim()) return alert("Equipment name is required");
     if (!quantity || quantity <= 0)
       return alert("Quantity must be greater than 0");
 
-    // Wrap supplier as object for backend compatibility
     const equipmentData = {
       name,
       category,
       serialNumber,
       status,
       quantity: Number(quantity),
-      //   supplier: supplier ? { id: 0, name: supplier } : null,
     };
 
     try {
+      let response;
       if (isEdit) {
-        await apiClient.put(`/api/equipment/${id}`, equipmentData);
-        alert("Equipment updated successfully!");
+        response = await apiClient.put(`/api/equipment/${id}`, equipmentData);
       } else {
-        await apiClient.post("/api/equipment", equipmentData);
-        alert("Equipment added successfully!");
+        response = await apiClient.post("/api/equipment", equipmentData);
       }
+
+      const savedEquipment = response.data;
+
+      // ✅ Unified cache update
+      queryClient.setQueryData(["equipments"], (oldData: any) => {
+        if (!oldData) return [savedEquipment];
+        // If update, replace the item
+        const exists = oldData.find((eq: any) => eq.id === savedEquipment.id);
+        if (exists) {
+          return oldData.map((eq: any) =>
+            eq.id === savedEquipment.id ? savedEquipment : eq
+          );
+        }
+        // If add, append the new item
+        return [...oldData, savedEquipment];
+      });
+
+      alert(
+        isEdit
+          ? "Equipment updated successfully!"
+          : "Equipment added successfully!"
+      );
       router.push("/equipment");
     } catch (err: any) {
       console.error(err);
@@ -88,7 +102,6 @@ export default function NewEquipmentPage() {
   return (
     <div className="min-h-screen bg-slate-50 py-10 px-4">
       <div className="max-w-2xl mx-auto space-y-8">
-        {/* Header */}
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
@@ -113,7 +126,6 @@ export default function NewEquipmentPage() {
           </div>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit} noValidate>
           <Card className="border-blue-100 shadow-sm">
             <CardHeader>
@@ -124,7 +136,6 @@ export default function NewEquipmentPage() {
             </CardHeader>
 
             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Name */}
               <div className="space-y-2">
                 <Label htmlFor="name" className="text-slate-700">
                   Equipment Name
@@ -138,8 +149,6 @@ export default function NewEquipmentPage() {
                   required
                 />
               </div>
-
-              {/* Category */}
               <div className="space-y-2">
                 <Label htmlFor="category" className="text-slate-700">
                   Category
@@ -152,8 +161,6 @@ export default function NewEquipmentPage() {
                   className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
                 />
               </div>
-
-              {/* Serial Number */}
               <div className="space-y-2">
                 <Label htmlFor="serialNumber" className="text-slate-700">
                   Serial Number
@@ -166,8 +173,6 @@ export default function NewEquipmentPage() {
                   className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
                 />
               </div>
-
-              {/* Quantity */}
               <div className="space-y-2">
                 <Label htmlFor="quantity" className="text-slate-700">
                   Quantity
@@ -185,8 +190,6 @@ export default function NewEquipmentPage() {
                   className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
                 />
               </div>
-
-              {/* Status */}
               <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="status" className="text-slate-700">
                   Equipment Status
@@ -194,17 +197,8 @@ export default function NewEquipmentPage() {
                 <select
                   id="status"
                   value={status}
-                  onChange={(e) =>
-                    setStatus(
-                      e.target.value as
-                        | "ACTIVE"
-                        | "UNDER_MAINTENANCE"
-                        | "DAMAGED"
-                        | "RETIRED"
-                    )
-                  }
-                  className="w-full rounded-md border border-blue-200 bg-white px-3 py-2
-                           text-sm focus:border-blue-500 focus:ring-blue-500"
+                  onChange={(e) => setStatus(e.target.value as any)}
+                  className="w-full rounded-md border border-blue-200 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500"
                 >
                   <option value="ACTIVE">Active</option>
                   <option value="UNDER_MAINTENANCE">Under Maintenance</option>
@@ -214,7 +208,6 @@ export default function NewEquipmentPage() {
               </div>
             </CardContent>
 
-            {/* Actions */}
             <CardFooter className="flex justify-end gap-3 border-t border-blue-100">
               <Button
                 variant="outline"
@@ -223,7 +216,6 @@ export default function NewEquipmentPage() {
               >
                 <Link href="/equipment">Cancel</Link>
               </Button>
-
               <Button
                 type="submit"
                 className="bg-blue-600 hover:bg-blue-700 text-white shadow"
