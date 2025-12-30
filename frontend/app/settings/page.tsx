@@ -29,7 +29,7 @@ export default function SettingsPage() {
   // 🚪 Logout handler
   const handleLogout = () => {
     localStorage.removeItem("token");
-    localStorage.removeItem("user"); // if you store user info
+    localStorage.removeItem("user"); 
     router.replace("/login");
   };
 
