@@ -21,7 +21,6 @@ public class SecurityConfig {
     private final JwtAuthFilter jwtAuthFilter;
     private final CorsConfigurationSource corsConfigurationSource;
 
-    // ✅ Inject CORS bean properly
     public SecurityConfig(
             JwtAuthFilter jwtAuthFilter,
             CorsConfigurationSource corsConfigurationSource
@@ -31,25 +30,37 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource)) // ✅ FIXED
+                // Enable CORS
+                .cors(cors -> cors.configurationSource(corsConfigurationSource))
+                // Disable CSRF (JWT based)
                 .csrf(csrf -> csrf.disable())
+                // Stateless session
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
+                // Authorization rules
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/user/register").permitAll()
-                        .requestMatchers("/api/chemicals/**").permitAll()
-                        .requestMatchers("/api/equipment/**").permitAll()
-                        .requestMatchers("/api/suppliers/**").permitAll()
-                        .requestMatchers("/api/transactions/**").permitAll()
-                        .requestMatchers("/api/dashboard/**").permitAll()
+                        // PUBLIC ENDPOINTS
+                        .requestMatchers(
+                                "/auth/**",
+                                "/user/register/**",
+                                "/api/chemicals/**",
+                                "/api/equipment/**",
+                                "/api/suppliers/**",
+                                "/api/dashboard/**",
+                                "/api/transactions/**" // ✅ Transactions public
+                        ).permitAll()
+                        // EVERYTHING ELSE REQUIRES AUTH
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                // JWT filter
+                .addFilterBefore(
+                        jwtAuthFilter,
+                        UsernamePasswordAuthenticationFilter.class
+                );
 
         return http.build();
     }
@@ -61,8 +72,8 @@ public class SecurityConfig {
 
     @Bean
     public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration config
+            AuthenticationConfiguration configuration
     ) throws Exception {
-        return config.getAuthenticationManager();
+        return configuration.getAuthenticationManager();
     }
 }

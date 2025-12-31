@@ -11,25 +11,18 @@ import java.util.List;
 @Repository
 public interface InventoryTransactionRepository extends JpaRepository<InventoryTransaction, Long> {
 
-    // Find all transactions for a specific equipment
-    List<InventoryTransaction> findByEquipmentId(Long equipmentId);
+    // Get all transactions for a specific equipment
+    List<InventoryTransaction> findByEquipment_Id(Long equipmentId);
 
-    // Find all transactions for a specific chemical
-    List<InventoryTransaction> findByChemicalId(Long chemicalId);
+    // Get all transactions for a specific chemical
+    List<InventoryTransaction> findByChemical_Id(Long chemicalId);
 
-    // Find the 5 most recent transactions
-    // Make sure your entity has a field named 'transactionDate' (or rename here to match your entity)
+    // Get the latest 5 transactions by transaction date
     List<InventoryTransaction> findTop5ByOrderByTransactionDateDesc();
 
-    // Find transactions where quantity is less than minQuantity
-    List<InventoryTransaction> findByQuantityLessThan(int minQuantity);
+    // Get all transactions between two dates
+    List<InventoryTransaction> findByTransactionDateBetween(LocalDate startDate, LocalDate endDate);
 
-    // Find transactions by date range
-    List<InventoryTransaction> findByTransactionDateBetween(
-            LocalDate startDate,
-            LocalDate endDate
-    );
-
-    // Find transactions by type (IN / OUT / ADJUSTMENT)
+    // Get all transactions by type (enum)
     List<InventoryTransaction> findByTransactionType(TransactionType transactionType);
 }

@@ -1,5 +1,7 @@
 package org.wldu.webservices.services.contracts;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.wldu.webservices.enities.Equipment;
 import org.wldu.webservices.enities.EquipmentStatus;
 
@@ -16,13 +18,14 @@ public interface EquipmentService {
 
     Equipment getEquipmentByName(String name);
 
-    List<Equipment>getEquipmentByStatus(EquipmentStatus status);
+    List<Equipment> getEquipmentByStatus(EquipmentStatus status);
 
-//    List<Equipment> getEquipmentBySupplier(Long supplierId);
+    Equipment updateEquipment(Long id, Equipment equipmentDetails);
 
-    Optional<Equipment> updateEquipment(Long id, Equipment equipmentDetails);
+    // ✅ Add this exact method
+    Page<Equipment> getAllEquipment(Pageable pageable);
 
     void deleteEquipment(Long id);
 
-    Object countAll();
+    long countAll();
 }

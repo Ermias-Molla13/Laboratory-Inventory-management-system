@@ -1,11 +1,14 @@
 package org.wldu.webservices.services.imp;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.wldu.webservices.enities.Equipment;
 import org.wldu.webservices.enities.EquipmentStatus;
 import org.wldu.webservices.repositories.EquipmentRepository;
 import org.wldu.webservices.services.contracts.EquipmentService;
+
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
@@ -41,35 +44,27 @@ public class EquipmentServiceImpl implements EquipmentService {
         return equipmentRepository.findByStatus(status);
     }
 
-//    @Override
-//    public List<Equipment> getEquipmentBySupplier(Long supplierId) {
-//        return null;
-//    }
-
-//    @Override
-//    public List<Equipment> getEquipmentBySupplier(Long supplierId) {
-//        return equipmentRepository.findBySupplierId(supplierId);
-//    }
-
     @Override
-    public Optional<Equipment> updateEquipment(Long id, Equipment equipmentDetails) {
-        return equipmentRepository.findById(id)
-                .map(equipment -> {
-                    equipment.setName(equipmentDetails.getName());
-                    equipment.setCategory(equipmentDetails.getCategory());
-                    equipment.setSerialNumber(equipmentDetails.getSerialNumber());
-                    equipment.setStatus(equipmentDetails.getStatus());
-                    equipment.setQuantity(equipmentDetails.getQuantity());
-//                    equipment.setSupplier(equipmentDetails.getSupplier());
+    public Equipment updateEquipment(Long id, Equipment equipmentDetails) {
+        // Unwrap Optional
+        Equipment equipment = equipmentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Equipment not found with id: " + id));
 
-                    // Save to DB
-                    Equipment updated = equipmentRepository.save(equipment);
-                    return updated;
-                });
+        // Update fields
+        equipment.setName(equipmentDetails.getName());
+        equipment.setCategory(equipmentDetails.getCategory());
+        equipment.setSerialNumber(equipmentDetails.getSerialNumber());
+        equipment.setStatus(equipmentDetails.getStatus());
+        equipment.setQuantity(equipmentDetails.getQuantity());
+
+        // Save and return updated equipment
+        return equipmentRepository.save(equipment);
     }
 
-
-
+//    @Override
+    public Page<Equipment> getAllEquipment(Pageable pageable) {
+        return equipmentRepository.findAll(pageable);
+    }
 
     @Override
     public void deleteEquipment(Long id) {
@@ -77,7 +72,7 @@ public class EquipmentServiceImpl implements EquipmentService {
     }
 
     @Override
-    public Object countAll() {
-        return null;
+    public long countAll() {
+        return equipmentRepository.count();
     }
 }

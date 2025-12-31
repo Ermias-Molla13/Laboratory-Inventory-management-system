@@ -9,20 +9,9 @@ import java.time.LocalDate;
 @Entity
 @Table(name ="chemicals")
 public class Chemical {
-  package org.wldu.webservices.enities;
-
-import jakarta.persistence.*;
-import org.springframework.format.annotation.DurationFormat;
-import java.time.LocalDate;
-
-
-
-@Entity
-@Table(name ="chemicals")
-public class Chemical {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
 
     @Column(nullable = false)
     private String name;
@@ -42,6 +31,8 @@ public class Chemical {
 
     @Column(nullable = false)
     private String storageLocation;
+
+
 
 
 
@@ -115,6 +106,6 @@ public class Chemical {
     public void setStorageLocation(String storageLocation) {
         this.storageLocation = storageLocation;
     }
-}
+
 
 }

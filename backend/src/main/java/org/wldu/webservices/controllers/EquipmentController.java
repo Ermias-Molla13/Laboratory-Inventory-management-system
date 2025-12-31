@@ -1,11 +1,20 @@
 package org.wldu.webservices.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.wldu.webservices.enities.Chemical;
 import org.wldu.webservices.enities.Equipment;
 import org.wldu.webservices.enities.EquipmentStatus;
+import org.wldu.webservices.repositories.EquipmentRepository;
 import org.wldu.webservices.services.contracts.EquipmentService;
+
+
+import org.springframework.data.domain.Pageable; // ✅ CORRECT
 
 import java.util.List;
 import java.util.Optional;
@@ -16,12 +25,25 @@ public class EquipmentController {
 
     @Autowired
     private EquipmentService equipmentService;
+    private EquipmentRepository equipmentRepository;
 
 
     @PostMapping
     public Equipment addEquipment(@RequestBody Equipment equipment) {
+        System.out.println("ADD EQUIPMENT HIT");
         return equipmentService.saveEquipment(equipment);
     }
+
+//    @GetMapping
+//    public Page<Equipment> getAllEquipment(
+//            @RequestParam(defaultValue = "0") int page,
+//            @RequestParam(defaultValue = "10") int size,
+//            @RequestParam(defaultValue = "id") String sortBy
+//    ) {
+//        Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
+//        return equipmentService.getAllEquipment(pageable);
+//    }
+
 
 
     @GetMapping
@@ -54,8 +76,14 @@ public class EquipmentController {
 //    }
 
     @PutMapping("/{id}")
-    public ResponseEntity<String> test(@PathVariable Long id) {
-        return ResponseEntity.ok("PUT WORKS");
+    public ResponseEntity<Equipment> updateEquipment(
+            @PathVariable Long id,
+            @RequestBody Equipment equipmentDetails
+    ) {
+        // CALL THE SERVICE METHOD
+        Equipment updatedEquipment = equipmentService.updateEquipment(id, equipmentDetails);
+
+        return ResponseEntity.ok(updatedEquipment);
     }
 
 
