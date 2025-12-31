@@ -19,13 +19,19 @@ import {
   Trash,
   ArrowDownLeft,
   ArrowUpRight,
+  FileText,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import apiClient from "@/lib/apiClient";
 import { useRouter } from "next/navigation";
 
-/* -------------------- Types -------------------- */
+/* ---------- Export Libraries ---------- */
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 
+/* -------------------- Types -------------------- */
 interface EntityRef {
   id: number;
   name?: string;
@@ -43,10 +49,10 @@ interface Transaction {
 }
 
 /* -------------------- Page -------------------- */
-
 export default function TransactionsPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
+
   const [searchTerm, setSearchTerm] = useState("");
   const [token, setToken] = useState<string | null>(null);
   const [isAuthChecked, setIsAuthChecked] = useState(false);
@@ -62,13 +68,11 @@ export default function TransactionsPage() {
     }
   }, [router]);
 
-  /* ---------- Fetch ---------- */
+  /* ---------- Fetch Transactions ---------- */
   const fetchTransactions = async (): Promise<Transaction[]> => {
     if (!token) return [];
     const res = await apiClient.get("/api/transactions", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { Authorization: `Bearer ${token}` },
     });
     return res.data ?? [];
   };
@@ -80,7 +84,7 @@ export default function TransactionsPage() {
   } = useQuery({
     queryKey: ["transactions"],
     queryFn: fetchTransactions,
-    enabled: isAuthChecked, // Only run after token is set
+    enabled: isAuthChecked,
   });
 
   /* ---------- Delete ---------- */
@@ -105,31 +109,115 @@ export default function TransactionsPage() {
     );
   });
 
-  if (!isAuthChecked) return null; // wait for auth check
+  /* ---------- Export PDF ---------- */
+  const handleExportPDF = () => {
+    const doc = new jsPDF();
+    doc.text("Transaction Report", 14, 15);
+
+    autoTable(doc, {
+      startY: 20,
+      head: [
+        [
+          "Equipment",
+          "Chemical",
+          "Supplier",
+          "Quantity",
+          "Type",
+          "Date",
+          "Notes",
+        ],
+      ],
+      body: filteredTransactions.map((tx) => [
+        getName(tx.equipment),
+        getName(tx.chemical),
+        getName(tx.supplier),
+        tx.quantity,
+        tx.transactionType,
+        new Date(tx.transactionDate).toLocaleDateString(),
+        tx.notes || "-",
+      ]),
+    });
+
+    doc.save("transactions.pdf");
+  };
+
+  /* ---------- Export Excel ---------- */
+  const handleExportExcel = () => {
+    const data = filteredTransactions.map((tx) => ({
+      Equipment: getName(tx.equipment),
+      Chemical: getName(tx.chemical),
+      Supplier: getName(tx.supplier),
+      Quantity: tx.quantity,
+      Type: tx.transactionType,
+      Date: new Date(tx.transactionDate).toLocaleDateString(),
+      Notes: tx.notes || "-",
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Transactions");
+
+    const buffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+
+    const blob = new Blob([buffer], {
+      type: "application/octet-stream",
+    });
+
+    saveAs(blob, "transactions.xlsx");
+  };
+
+  /* ---------- UI States ---------- */
+  if (!isAuthChecked) return null;
   if (isLoading) return <p>Loading transactions...</p>;
   if (error instanceof Error) return <p>Error: {error.message}</p>;
 
   /* -------------------- UI -------------------- */
-
   return (
     <div className="min-h-screen bg-slate-50 py-8 px-4">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-3xl font-bold">Transactions</h1>
-          <Button
-            className="bg-blue-600 hover:bg-blue-700 text-white shadow"
-            onClick={() => router.push("/transactions/new")}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Transaction
-          </Button>
+
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              className="border-blue-200 text-blue-700 hover:bg-blue-50"
+              onClick={handleExportPDF}
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              Export PDF
+            </Button>
+
+            <Button
+              variant="outline"
+              className="border-green-200 text-green-700 hover:bg-green-50"
+              onClick={handleExportExcel}
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              Export Excel
+            </Button>
+
+            <Button
+              className="bg-blue-600 hover:bg-blue-700 text-white shadow"
+              onClick={() => router.push("/transactions/new")}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Transaction
+            </Button>
+          </div>
         </div>
 
+        {/* Table */}
         <Card>
           <CardHeader>
             <div className="flex justify-between items-center">
               <CardTitle>Transaction History</CardTitle>
+
               <div className="relative w-64">
                 <Search className="absolute left-2 top-2 h-4 w-4 text-gray-400" />
                 <Input
@@ -185,12 +273,11 @@ export default function TransactionsPage() {
                     <TableCell>
                       {new Date(tx.transactionDate).toLocaleDateString()}
                     </TableCell>
+
                     <TableCell>{tx.notes || "-"}</TableCell>
 
-                    {/* Actions */}
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        {/* Edit */}
                         <Button
                           variant="ghost"
                           size="icon"
@@ -201,7 +288,6 @@ export default function TransactionsPage() {
                           <Edit className="h-4 w-4 text-blue-600" />
                         </Button>
 
-                        {/* Delete */}
                         <Button
                           variant="ghost"
                           size="icon"

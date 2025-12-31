@@ -29,4 +29,6 @@ public interface ChemicalService {
     long countLowStock(int threshold);
 
     List<Chemical> findLowStock(int threshold);
+    List<Chemical> getExpiringSoon(LocalDate now, LocalDate future);
+
 }

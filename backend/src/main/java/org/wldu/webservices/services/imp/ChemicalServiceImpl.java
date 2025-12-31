@@ -80,4 +80,9 @@ public class ChemicalServiceImpl implements ChemicalService {
     public List<Chemical> findLowStock(int threshold) {
         return chemicalRepository.findByQuantityLessThan(threshold);
     }
+    @Override
+    public List<Chemical> getExpiringSoon(LocalDate now, LocalDate future) {
+        return chemicalRepository.findByExpiryDateBetween(now, future);
+    }
+
 }
