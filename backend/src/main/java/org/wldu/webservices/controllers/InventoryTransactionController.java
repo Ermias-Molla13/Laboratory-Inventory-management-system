@@ -38,9 +38,7 @@ public class InventoryTransactionController {
         this.supplierRepository = supplierRepository;
     }
 
-    // ========================
-    // CREATE TRANSACTION
-    // ========================
+   
     @PostMapping
     public InventoryTransaction save(@RequestBody Map<String, Object> payload) {
         Long equipmentId = Long.valueOf(payload.get("equipmentId").toString());
@@ -51,7 +49,6 @@ public class InventoryTransactionController {
         String dateStr = payload.get("transactionDate").toString();
         String notes = payload.getOrDefault("notes", "").toString();
 
-        // Load full entities
         Equipment eq = equipmentRepository.findById(equipmentId)
                 .orElseThrow(() -> new RuntimeException("Equipment not found"));
         Chemical chem = chemicalRepository.findById(chemicalId)
@@ -64,10 +61,8 @@ public class InventoryTransactionController {
                     .orElseThrow(() -> new RuntimeException("Supplier not found"));
         }
 
-        // Convert string to enum
         TransactionType type = TransactionType.valueOf(typeStr.toUpperCase());
 
-        // Build transaction
         InventoryTransaction tx = new InventoryTransaction();
         tx.setEquipment(eq);
         tx.setChemical(chem);
@@ -80,9 +75,7 @@ public class InventoryTransactionController {
         return transactionRepository.save(tx);
     }
 
-    // ========================
-    // UPDATE TRANSACTION
-    // ========================
+  
     @PutMapping("/{id}")
     public InventoryTransaction updateTransaction(
             @PathVariable Long id,
@@ -91,7 +84,6 @@ public class InventoryTransactionController {
         InventoryTransaction tx = transactionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Transaction not found"));
 
-        // Parse payload
         Long equipmentId = Long.valueOf(payload.get("equipmentId").toString());
         Long chemicalId = Long.valueOf(payload.get("chemicalId").toString());
         Object supplierObj = payload.get("supplierId");
@@ -100,7 +92,6 @@ public class InventoryTransactionController {
         String dateStr = payload.get("transactionDate").toString();
         String notes = payload.getOrDefault("notes", "").toString();
 
-        // Load full entities
         Equipment eq = equipmentRepository.findById(equipmentId)
                 .orElseThrow(() -> new RuntimeException("Equipment not found"));
         Chemical chem = chemicalRepository.findById(chemicalId)
