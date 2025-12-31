@@ -2,6 +2,7 @@ package org.wldu.webservices.services.contracts;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.wldu.webservices.enities.Chemical;
 import org.wldu.webservices.enities.Equipment;
 import org.wldu.webservices.enities.EquipmentStatus;
 
@@ -28,4 +29,10 @@ public interface EquipmentService {
     void deleteEquipment(Long id);
 
     long countAll();
+
+    long countLowStock(int threshold);
+
+
+
+    List<Equipment> findLowStock(int threshold);
 }

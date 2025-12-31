@@ -3,6 +3,7 @@ package org.wldu.webservices.services.imp;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
+import org.wldu.webservices.enities.Chemical;
 import org.wldu.webservices.enities.Equipment;
 import org.wldu.webservices.enities.EquipmentStatus;
 import org.wldu.webservices.repositories.EquipmentRepository;
@@ -75,4 +76,18 @@ public class EquipmentServiceImpl implements EquipmentService {
     public long countAll() {
         return equipmentRepository.count();
     }
+
+
+    @Override
+    public long countLowStock(int threshold) {
+        return equipmentRepository.findByQuantityLessThan(threshold).size();
+    }
+
+
+
+    @Override
+    public List<Equipment> findLowStock(int threshold) {
+        return equipmentRepository.findByQuantityLessThan(threshold);
+    }
 }
+

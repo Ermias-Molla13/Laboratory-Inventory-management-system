@@ -17,4 +17,6 @@ public interface ChemicalRepository extends JpaRepository<Chemical, Long> {
     List<Chemical> findByStorageLocation(String storageLocation);
 
     List<Chemical> findByQuantityLessThan(int threshold); // Low stock
+    List<Chemical> findByExpiryDateBetween(LocalDate start, LocalDate end);
+
 }

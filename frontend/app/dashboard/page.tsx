@@ -55,7 +55,7 @@ export default function Dashboard() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [dashboardItems, setDashboardItems] = useState<StockItem[]>([]);
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081";
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://localhost:8081";
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -85,7 +85,7 @@ export default function Dashboard() {
           },
           {
             title: "Low Stock Alerts",
-            value: statsRes.data.lowStockAlerts ?? 0,
+            value: statsRes.data.lowChemicalStock + statsRes.data.lowEquipmentStock,
             icon: AlertTriangle,
             description: "Items require reordering",
             color: "text-destructive",
@@ -106,12 +106,18 @@ export default function Dashboard() {
         setTransactions(Array.isArray(txRes.data) ? txRes.data : []);
 
         // Low stock items (existing endpoint)
-        const stockRes = await axios.get(`${API_BASE}/api/dashboard/stock/low`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const lowStockData: StockItem[] = Array.isArray(stockRes.data)
-          ? stockRes.data
-          : [];
+       const [equipmentRes, chemicalRes] = await Promise.all([
+         axios.get(`${API_BASE}/api/dashboard/equipment/low-stock`, {
+           headers: { Authorization: `Bearer ${token}` },
+         }),
+         axios.get(`${API_BASE}/api/dashboard/chemicals/low-stock`, {
+           headers: { Authorization: `Bearer ${token}` },
+         }),
+       ]);
+         const lowStockData: StockItem[] = [
+           ...(Array.isArray(equipmentRes.data) ? equipmentRes.data : []),
+           ...(Array.isArray(chemicalRes.data) ? chemicalRes.data : []),
+         ];
 
         const now = new Date();
 
@@ -200,7 +206,9 @@ export default function Dashboard() {
               </CardTitle>
               <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center shadow-md">
                 <stat.icon
-                  className={`h-5 w-5 ${stat.color ? stat.color : "text-blue-600"}`}
+                  className={`h-5 w-5 ${
+                    stat.color ? stat.color : "text-blue-600"
+                  }`}
                 />
               </div>
             </CardHeader>
@@ -237,12 +245,24 @@ export default function Dashboard() {
                     <div className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center shadow-sm">
                       <FlaskConical className="h-5 w-5 text-blue-600" />
                     </div>
+                    <span
+                      className={`absolute -top-1 -right-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold text-white
+      ${
+        tx.type === "IN"
+          ? "bg-green-600"
+          : tx.type === "OUT"
+          ? "bg-red-600"
+          : "bg-slate-500"
+      }`}
+                    >
+                      {tx.type}
+                    </span>
                     <div>
                       <p className="text-sm font-semibold text-slate-800">
-                        {tx.chemicalName}
+                        {tx.type}
                       </p>
                       <p className="text-xs text-slate-500">
-                        {tx.type} • Qty {tx.quantity}
+                        Qty {tx.quantity}
                       </p>
                     </div>
                   </div>
