@@ -40,7 +40,7 @@ public class DashboardController {
 
     @GetMapping("/stats")
     public Map<String, Long> getStats() {
-
+// Here add long can be solve the problem that happened in dashboard not visible the number 
         long totalChemicals = safe(chemicalService.countAll());
         long equipmentItems = safe(equipmentService.countAll());
 
