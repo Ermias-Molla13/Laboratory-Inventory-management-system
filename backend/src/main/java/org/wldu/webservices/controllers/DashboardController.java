@@ -37,7 +37,6 @@ public class DashboardController {
         this.transactionRepository = transactionRepository;
     }
 
-    /* ---------------- Dashboard Stats ---------------- */
 
     @GetMapping("/stats")
     public Map<String, Long> getStats() {
@@ -65,14 +64,12 @@ public class DashboardController {
         );
     }
 
-    /* ---------------- Recent Transactions ---------------- */
 
     @GetMapping("/transactions/recent")
     public List<InventoryTransaction> getRecentTransactions() {
         return transactionRepository.findTop5ByOrderByTransactionDateDesc();
     }
 
-    /* ---------------- Low Stock ---------------- */
 
     @GetMapping("/chemicals/low-stock")
     public List<Chemical> getLowStockChemicals() {
