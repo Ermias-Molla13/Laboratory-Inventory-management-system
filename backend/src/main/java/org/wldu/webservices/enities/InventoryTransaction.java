@@ -52,9 +52,7 @@ public class InventoryTransaction {
     @Column
     private String notes;
 
-    // =====================
-    // Constructors
-    // =====================
+
     public InventoryTransaction() {}
 
     public InventoryTransaction(Equipment equipment,
@@ -73,9 +71,7 @@ public class InventoryTransaction {
         this.notes = notes;
     }
 
-    // =====================
-    // Explicit getters & setters (avoid Lombok issues)
-    // =====================
+
     public Long getId() { return id; }
 
     public Equipment getEquipment() { return equipment; }
@@ -145,9 +141,7 @@ public class InventoryTransaction {
         }
     }
 
-    // =====================
-    // Auto-set defaults before persisting
-    // =====================
+
     @PrePersist
     public void prePersist() {
         if (transactionDate == null) transactionDate = LocalDate.now();
