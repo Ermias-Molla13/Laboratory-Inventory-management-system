@@ -139,7 +139,6 @@ export default function Dashboard() {
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error);
       } finally {
-        // Stop loader always
         setIsLoading(false);
       }
     }
