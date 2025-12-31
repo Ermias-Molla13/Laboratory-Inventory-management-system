@@ -24,7 +24,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import apiClient from "@/lib/apiClient";
 import { useRouter } from "next/navigation";
 
-/* -------------------- Types -------------------- */
 
 interface EntityRef {
   id: number;
@@ -42,7 +41,7 @@ interface Transaction {
   notes?: string;
 }
 
-/* -------------------- Page -------------------- */
+
 
 export default function TransactionsPage() {
   const router = useRouter();
@@ -51,7 +50,7 @@ export default function TransactionsPage() {
   const [token, setToken] = useState<string | null>(null);
   const [isAuthChecked, setIsAuthChecked] = useState(false);
 
-  /* ---------- Auth Guard ---------- */
+  
   useEffect(() => {
     const storedToken = localStorage.getItem("token");
     if (!storedToken) {
@@ -62,7 +61,7 @@ export default function TransactionsPage() {
     }
   }, [router]);
 
-  /* ---------- Fetch ---------- */
+  
   const fetchTransactions = async (): Promise<Transaction[]> => {
     if (!token) return [];
     const res = await apiClient.get("/api/transactions", {
@@ -80,10 +79,10 @@ export default function TransactionsPage() {
   } = useQuery({
     queryKey: ["transactions"],
     queryFn: fetchTransactions,
-    enabled: isAuthChecked, // Only run after token is set
+    enabled: isAuthChecked, 
   });
 
-  /* ---------- Delete ---------- */
+  
   const deleteMutation = useMutation({
     mutationFn: (id: number) =>
       apiClient.delete(`/api/transactions/${id}`, {
@@ -93,7 +92,7 @@ export default function TransactionsPage() {
       queryClient.invalidateQueries({ queryKey: ["transactions"] }),
   });
 
-  /* ---------- Helpers ---------- */
+ 
   const getName = (e?: EntityRef) => e?.name || "-";
 
   const filteredTransactions = transactions.filter((tx) => {
@@ -105,12 +104,11 @@ export default function TransactionsPage() {
     );
   });
 
-  if (!isAuthChecked) return null; // wait for auth check
+  if (!isAuthChecked) return null; 
   if (isLoading) return <p>Loading transactions...</p>;
   if (error instanceof Error) return <p>Error: {error.message}</p>;
 
-  /* -------------------- UI -------------------- */
-
+  
   return (
     <div className="min-h-screen bg-slate-50 py-8 px-4">
       <div className="max-w-6xl mx-auto space-y-6">
