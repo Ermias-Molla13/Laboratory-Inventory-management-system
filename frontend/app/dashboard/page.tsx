@@ -85,6 +85,7 @@ export default function Dashboard() {
           },
           {
             title: "Low Stock Alerts",
+            // In this we solve some error low stock alert is not visible before 
             value: statsRes.data.lowChemicalStock + statsRes.data.lowEquipmentStock,
             icon: AlertTriangle,
             description: "Items require reordering",
