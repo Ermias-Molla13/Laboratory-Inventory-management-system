@@ -40,7 +40,7 @@ public class InventoryTransaction {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private TransactionType transactionType; // IN / OUT / ADJUSTMENT
+    private TransactionType transactionType; 
 
     @Column(nullable = false)
     private LocalDate transactionDate;
@@ -52,9 +52,7 @@ public class InventoryTransaction {
     @Column
     private String notes;
 
-    // =====================
-    // Constructors
-    // =====================
+ 
     public InventoryTransaction() {}
 
     public InventoryTransaction(Equipment equipment,
@@ -73,9 +71,7 @@ public class InventoryTransaction {
         this.notes = notes;
     }
 
-    // =====================
-    // Explicit getters & setters (avoid Lombok issues)
-    // =====================
+   
     public Long getId() { return id; }
 
     public Equipment getEquipment() { return equipment; }
@@ -101,9 +97,7 @@ public class InventoryTransaction {
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
 
-    // =====================
-    // JSON setters for ID mapping
-    // =====================
+   
     @JsonSetter("equipmentId")
     public void setEquipmentById(Long id) {
         if (id != null) {
@@ -145,9 +139,7 @@ public class InventoryTransaction {
         }
     }
 
-    // =====================
-    // Auto-set defaults before persisting
-    // =====================
+   
     @PrePersist
     public void prePersist() {
         if (transactionDate == null) transactionDate = LocalDate.now();
