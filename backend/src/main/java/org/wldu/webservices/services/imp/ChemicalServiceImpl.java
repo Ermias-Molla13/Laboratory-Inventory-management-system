@@ -120,5 +120,18 @@ public class ChemicalServiceImpl implements ChemicalService {
         return chemicalRepository.count();
     }
 
-    /**
-     * Count chemicals below a given quantity threshold.
+    @Override
+    public long countLowStock(int threshold) {
+        return chemicalRepository.findByQuantityLessThan(threshold).size();
+    }
+
+    @Override
+    public List<Chemical> findLowStock(int threshold) {
+        return chemicalRepository.findByQuantityLessThan(threshold);
+    }
+    @Override
+    public List<Chemical> getExpiringSoon(LocalDate now, LocalDate future) {
+        return chemicalRepository.findByExpiryDateBetween(now, future);
+    }
+
+}

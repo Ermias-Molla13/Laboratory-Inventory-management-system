@@ -47,9 +47,15 @@ public class EquipmentController {
 
 
     @GetMapping
-    public List<Equipment> getAllEquipment() {
-        return equipmentService.getAllEquipment();
+    public Page<Equipment> getAllEquipment(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sortBy
+    ) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
+        return equipmentService.getAllEquipment(pageable);
     }
+
 
 
     @GetMapping("/{id}")

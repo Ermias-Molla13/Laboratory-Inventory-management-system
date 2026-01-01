@@ -57,6 +57,12 @@ public class ChemicalController {
         return chemicalService.updateChemical(id, chemical);
     }
 
+    @GetMapping("/expiring-soon")
+    public List<Chemical> getExpiringSoon() {
+        LocalDate now = LocalDate.now();
+        LocalDate future = now.plusDays(10);
+        return chemicalService.getExpiringSoon(now, future);
+    }
 
 
 
