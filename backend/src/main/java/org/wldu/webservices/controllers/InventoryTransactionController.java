@@ -18,7 +18,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/transactions")
-@CrossOrigin(origins = "http://localhost:3000") // adjust frontend URL
+@CrossOrigin(origins = "http://localhost:3000") 
 public class InventoryTransactionController {
 
     private final InventoryTransactionRepository transactionRepository;
