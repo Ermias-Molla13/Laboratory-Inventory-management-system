@@ -26,7 +26,7 @@ interface Supplier {
   phoneNumber: string;
 }
 
-// Fetch suppliers
+
 const fetchSuppliers = async (): Promise<Supplier[]> => {
   try {
     const res = await apiClient.get("/api/suppliers");
@@ -73,7 +73,7 @@ export default function SuppliersPage() {
   return (
     <div className="min-h-screen bg-slate-50 py-8 px-4">
       <div className="space-y-8 max-w-7xl mx-auto">
-        {/* Page Header */}
+        
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
@@ -95,14 +95,14 @@ export default function SuppliersPage() {
           </Button>
         </div>
 
-        {/* Supplier List */}
+       
         <Card className="border-blue-100 shadow-sm">
           <CardHeader className="pb-4 space-y-3">
             <CardTitle className="text-blue-800 text-lg">
               Supplier List
             </CardTitle>
 
-            {/* Search */}
+            
             <div className="relative max-w-sm">
               <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
               <Input
@@ -157,7 +157,7 @@ export default function SuppliersPage() {
 
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        {/* Edit */}
+                        
                         <Button
                           variant="ghost"
                           size="icon"
@@ -181,7 +181,7 @@ export default function SuppliersPage() {
                           <Edit className="h-4 w-4 text-blue-600" />
                         </Button>
 
-                        {/* Delete */}
+                        
                         <Button
                           variant="ghost"
                           size="icon"
