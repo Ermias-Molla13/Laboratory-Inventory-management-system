@@ -25,13 +25,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import apiClient from "@/lib/apiClient";
 import { useRouter } from "next/navigation";
 
-/* ---------- Export Libraries ---------- */
+
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 
-/* -------------------- Types -------------------- */
+
 interface EntityRef {
   id: number;
   name?: string;
@@ -48,7 +48,7 @@ interface Transaction {
   notes?: string;
 }
 
-/* -------------------- Page -------------------- */
+
 export default function TransactionsPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -57,7 +57,7 @@ export default function TransactionsPage() {
   const [token, setToken] = useState<string | null>(null);
   const [isAuthChecked, setIsAuthChecked] = useState(false);
 
-  /* ---------- Auth Guard ---------- */
+  
   useEffect(() => {
     const storedToken = localStorage.getItem("token");
     if (!storedToken) {
@@ -68,7 +68,7 @@ export default function TransactionsPage() {
     }
   }, [router]);
 
-  /* ---------- Fetch Transactions ---------- */
+ 
   const fetchTransactions = async (): Promise<Transaction[]> => {
     if (!token) return [];
     const res = await apiClient.get("/api/transactions", {
