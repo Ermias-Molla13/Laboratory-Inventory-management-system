@@ -33,7 +33,7 @@ public class InventoryTransactionServiceImpl implements InventoryTransactionServ
     @Override
     public InventoryTransaction saveTransaction(InventoryTransaction transaction) {
 
-        // Validate and load Equipment
+        
         Optional.ofNullable(transaction.getEquipment())
                 .map(Equipment::getId)
                 .ifPresent(id -> transaction.setEquipment(
@@ -41,7 +41,7 @@ public class InventoryTransactionServiceImpl implements InventoryTransactionServ
                                 .orElseThrow(() -> new RuntimeException("Equipment not found with id: " + id))
                 ));
 
-        // Validate and load Chemical
+        
         Optional.ofNullable(transaction.getChemical())
                 .map(Chemical::getId)
                 .ifPresent(id -> transaction.setChemical(
@@ -49,7 +49,7 @@ public class InventoryTransactionServiceImpl implements InventoryTransactionServ
                                 .orElseThrow(() -> new RuntimeException("Chemical not found with id: " + id))
                 ));
 
-        // Validate and load Supplier
+        
         Optional.ofNullable(transaction.getSupplier())
                 .map(Supplier::getId)
                 .ifPresent(id -> transaction.setSupplier(
