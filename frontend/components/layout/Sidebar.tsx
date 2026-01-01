@@ -29,7 +29,7 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Mobile Menu Button */}
+      
       <button
         className="md:hidden fixed top-4 right-4 z-50 p-2 rounded-lg
                    bg-blue-600 text-white shadow-lg hover:bg-blue-700"
@@ -38,7 +38,7 @@ export function Sidebar() {
         <Menu className="h-6 w-6" />
       </button>
 
-      {/* Sidebar */}
+      
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-40 w-64 transform transition-transform duration-300",
@@ -47,7 +47,7 @@ export function Sidebar() {
         )}
       >
         <div className="flex flex-col h-full">
-          {/* Logo */}
+         
           <div className="h-16 flex items-center px-6 border-b border-blue-100">
             <Link
               href="/"
@@ -58,7 +58,7 @@ export function Sidebar() {
             </Link>
           </div>
 
-          {/* Navigation */}
+          
           <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-3">
             {sidebarItems.map((item) => {
               const isActive = pathname === item.href;
@@ -81,7 +81,7 @@ export function Sidebar() {
             })}
           </nav>
 
-          {/* User Info */}
+          
           <div className="p-4 border-t border-blue-100">
             <div className="flex items-center gap-3">
               <div
