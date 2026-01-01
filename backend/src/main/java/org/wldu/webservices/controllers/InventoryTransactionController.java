@@ -104,10 +104,10 @@ public class InventoryTransactionController {
                     .orElseThrow(() -> new RuntimeException("Supplier not found"));
         }
 
-        // Convert string to enum
+        
         TransactionType type = TransactionType.valueOf(typeStr.toUpperCase());
 
-        // Update transaction fields
+        
         tx.setEquipment(eq);
         tx.setChemical(chem);
         tx.setSupplier(sup); // can be null
